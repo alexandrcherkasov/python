@@ -1,0 +1,164 @@
+import numpy as np
+import cv2 as cv
+import graphviz as gv
+import sys
+import math
+import pylab
+import matplotlib
+import os
+import cv2
+import imutils
+from math import sqrt
+from math import pi
+from scipy.spatial import ConvexHull
+from collections import namedtuple
+from matplotlib import mlab
+
+
+class ScoliosisDetermination:
+    def __init__(self, img):
+        img = cv.imread(img)
+        hsv = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        self.angles_list = []
+        self.neutral = []
+        self.angles = []
+        self.angles = np.array(self.angles)
+        self.contours, hierarchy = cv.findContours(hsv, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        self.contours = np.array(self.contours)
+        self.contours = self.contours[0] if imutils.is_cv2() else self.contours[1]
+        for i in range(len(self.contours)):
+            cnt = self.contours[i]
+            rect = cv.minAreaRect(cnt)
+            box = cv.boxPoints(rect)
+            box = np.int0(box)
+            center, wh, rot = rect
+            center = np.int0(center)
+            rot = np.int0(rot)
+
+    # Описывающие прямоугольники
+    def describingRectangles(self, img):
+        img = cv.imread(img)
+        hsv = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        self.contours, hierarchy = cv.findContours(hsv, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        for i in range(len(self.contours)):
+            cnt = self.contours[i]
+            rect = cv.minAreaRect(cnt)
+            box = cv.boxPoints(rect)
+            box = np.int0(box)
+            # cv2.drawContours(img, [box], -1, (100, 220, 20), 2)
+            # cv.imshow('Contours Image', img)
+            # cv.waitKey()
+            # cv.destroyAllWindows()
+
+    # Вычисляем наклоны позвонков
+    def vertebralSlopes(self):
+        num = 0
+        for i in range(len(self.contours)):
+            cnt = self.contours[i]
+            rect = cv.minAreaRect(cnt)
+            box = cv.boxPoints(rect)
+            center, wh, rot = rect
+            box_transposed = box.transpose()
+            y_box = box_transposed[1]
+            first_point = box[0]
+            inum_second_point = np.argmax(box_transposed[1][1:]) + 1
+            second_point = box[inum_second_point]
+            if (inum_second_point == 3):
+                first_point, second_point = second_point, first_point
+            down_side_vect = first_point - second_point
+            norm = sqrt(down_side_vect[0] ** 2 + down_side_vect[1] ** 2)
+            down_side_vect /= norm
+            print('vect', num, down_side_vect[1] * 180 / pi)
+            self.angles_list.append(down_side_vect[1] * 180 / pi)
+            num += 1
+            box = np.int0(box)
+            center = np.int0(center)
+            rot = np.int0(rot)
+            self.angles = np.array(self.angles_list)
+            # print(os.path())
+            # !!! Нарисуем одномерный график
+            # pylab.plot(range(len(self.contours)), self.angles)
+            # !!! Покажем окно с нарисованным графиком
+            # pylab.show()
+
+    """Функция, которая делает левую нижнюю точку первоначальной"""
+
+    def normalPosition(self):
+        for i in range(len(self.contours)):
+            cnt = self.contours[i]
+            rect = cv.minAreaRect(cnt)
+            box = cv.boxPoints(rect)
+            box = np.int0(box)
+            center, wh, rot = rect
+            """Прямоугольники у которых первоначальная координата находится в правом нижнем углу,у них высота больше,чем длина, соответственно таким образом переопределяем эти координаты,меняя их местами"""
+            if (wh[1] >= wh[0]):
+                variable_box_0 = box[0]
+                variable_box_1 = box[1]
+                variable_box_2 = box[2]
+                variable_box_3 = box[3]
+                box[0] = variable_box_1
+                box[1] = variable_box_2
+                box[2] = variable_box_3
+                box[3] = variable_box_0
+
+    def neutralVertebrae(self):
+        curr_angle = 0.
+        pred_angle = 0.
+        kink = []
+        lneutral = False
+        for i, angle in enumerate(self.angles):
+            print(i, angle, math.fabs(pred_angle), math.fabs(curr_angle), not lneutral)
+            if i > 0 and not lneutral and math.fabs(pred_angle) > math.fabs(angle):
+                self.neutral.append(i - 1)
+                lneutral = True
+                print('lneutral')
+            if i > 0 and lneutral and math.fabs(pred_angle) < math.fabs(angle):
+                kink.append(i - 1)
+                lneutral = False
+                print('kink')
+            print(lneutral)
+            pred_angle = angle
+        print(self.neutral, kink)
+
+    def kobMethod(self):
+        for i in range(len(self.neutral) - 1):
+            print('i=', i)
+            ilower = self.neutral[i]
+            iupper = self.neutral[i + 1]
+            # нижние точки
+            cnt = self.contours[ilower]
+            rect = cv.minAreaRect(cnt)
+            box = cv.boxPoints(rect)
+            print(box, type(box))
+            box_transposed = box.transpose()
+            y_box = box_transposed[1]
+            fpoint1 = box[0]
+            inum_second_point = np.argmax(box_transposed[1][1:]) + 1
+            fpoint2 = box[inum_second_point]
+            # верхние точки
+            cnt = self.contours[iupper]
+            rect = cv.minAreaRect(cnt)
+            box = cv.boxPoints(rect)
+            box_transposed = box.transpose()
+            y_box = box_transposed[1]
+            first_point = box[0]
+            inum_second_point = np.argmax(box_transposed[1][1:]) + 1
+            inum_third_point, inum_fours_point = tuple({0, 1, 2, 3} - {0, inum_second_point})
+            print(0, inum_second_point, inum_third_point, inum_fours_point)
+            spoint1 = box[inum_third_point]
+            spoint2 = box[inum_fours_point]
+            B1 = (fpoint1[1] - fpoint2[1]) * (spoint1[0] - spoint2[0]) - (spoint1[1] + spoint2[0]) * (
+                    fpoint1[0] - fpoint2[0])
+            B2 = (fpoint2[1] - spoint2[1]) * (fpoint1[0] - fpoint2[0]) + (fpoint1[1] - fpoint2[1]) * (
+                    spoint2[0] - fpoint2[0])
+            Beta = -B1 / B2
+            print("BETA")
+            print(Beta)
+
+
+SD = ScoliosisDetermination("test.png")
+SD.describingRectangles("test.png")
+SD.vertebralSlopes()
+SD.neutralVertebrae()
+SD.kobMethod()
+SD.normalPosition()
