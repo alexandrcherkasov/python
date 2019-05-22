@@ -55,8 +55,8 @@ class spine_analizer:
             #cnt = self.contours[i]
             rect = cv.minAreaRect(self.contours[i])
             center, wh, rot = rect
-            _w = wh[0] + ((wh[0] / 100) * percent)
-            _h = wh[1] + ((wh[1] / 100) * percent)
+            _w = wh[0] - ((wh[0] / 100) * percent)
+            _h = wh[1] - ((wh[1] / 100) * percent)
             wh = _w, _h
             rect = center, wh, rot
             box = cv.boxPoints(rect)
