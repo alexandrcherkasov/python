@@ -1,29 +1,12 @@
-import numpy as np
-import cv2 as cv
-import graphviz as gv
-import sys
-import math
-import pylab
-import matplotlib
-import os
-import cv2
-import imutils
-from math import sqrt
-from math import pi
-from scipy.spatial import ConvexHull
-from collections import namedtuple
-from matplotlib import mlab
-
-
 class spine_analizer:
     def __init__(self, img):
-        self.img = cv.imread(img)
-        hsv = cv.cvtColor(self.img, cv.COLOR_BGR2GRAY)
-        # self.angle = []
-        # self.neutral = []
-        self.contours, hierarchy = cv.findContours(hsv, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        img = cv.imread(img)
+        hsv = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        #self.angle = []
+        #self.neutral = []
+        self.contours = cv.findContours(hsv, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         self.contours = np.array(self.contours)
-        # self.contours = self.contours[0] if imutils.is_cv2() else self.contours[1]
+        self.contours = self.contours[0] if imutils.is_cv2() else self.contours[1]
         self.lengtn = len(self.contours)
         self.box = np.zeros((self.lengtn, 4, 2))
         self.center = np.zeros((self.lengtn, 2))
@@ -31,19 +14,19 @@ class spine_analizer:
             cnt = self.contours[i]
             rect = cv.minAreaRect(cnt)
             box = cv.boxPoints(rect)
+            #box = np.int0(box)
+            #print(type(box),box.shape)
             center, wh, rot = rect
-            # box = np.int0(box)
-            # print(type(box),box.shape)
-            # center = np.int0(center)
+            #center = np.int0(center)
             self.center[i] = center
-            # print(type(center),center.shape)
-            # rot = np.int0(rot)
-            # print(type(rot),rot.shape)
+            #print(type(center),center.shape)
+            #rot = np.int0(rot)
+            #print(type(rot),rot.shape)
             """Прямоугольники у которых первоначальная координата находится в правом нижнем углу,у них высота больше,чем длина, соответственно таким образом переопределяем эти координаты,меняя их местами"""
             if (wh[1] >= wh[0]):
                 tmp0, tmp1, tmp2, tmp3 = box[0].copy(), box[1].copy(), box[2].copy(), box[3].copy()
-                # print ('--------------\n',i,box)
-                # print (tmp0, tmp1, tmp2, tmp3)
+                #print ('--------------\n',i,box)
+                #print (tmp0, tmp1, tmp2, tmp3)
                 box[0], box[1], box[2], box[3] = tmp1, tmp2, tmp3, tmp0
                 print(box, tmp0)
             self.box[i] = box
@@ -51,67 +34,38 @@ class spine_analizer:
     def reduce_box(self, percent):
         # Процедура уменьщает описывающий позвонок прямоугольник на percent проценов по двум измерениям
         # Результат: обновление поля box
-        for i in range(self.lengtn):
-            #cnt = self.contours[i]
-            rect = cv.minAreaRect(self.contours[i])
-            center, wh, rot = rect
-            _w = wh[0] - ((wh[0] / 100) * percent)
-            _h = wh[1] - ((wh[1] / 100) * percent)
-            wh = _w, _h
-            rect = center, wh, rot
-            box = cv.boxPoints(rect)
-            if (wh[1] >= wh[0]):
-                tmp0, tmp1, tmp2, tmp3 = box[0].copy(), box[1].copy(), box[2].copy(), box[3].copy()
-                box[0], box[1], box[2], box[3] = tmp1, tmp2, tmp3, tmp0
-                print(box, tmp0)
-            self.box[i] = box
+        pass
 
     def delete_box_intersection(self):
         # Процедура устраняет наложения прямоугольников
         # Результат: обновление поля box
-        for i in range(self.lengtn):
-            tmp1, tmp2 = self.box[i][1], self.box[i][2]
-            if i < (self.lengtn-1):
-                _tmp0, _tmp3 = self.box[i+1][0], self.box[i+1][3]
-            if tmp1[1] < _tmp0[1]:
-                _t = _tmp0[1] - tmp1[1]
-                tmp1[1] = tmp1[1] + _t
-                _tmp0[1] = _tmp0[1] - _t
-            if tmp2[1] < _tmp3[1]:
-                _t = _tmp3[1] - tmp2[1]
-                tmp2[1] = tmp2[1] + _t
-                _tmp3[1] = _tmp3[1] - _t
-            self.box[i][1], self.box[i][2] = tmp1, tmp2
-            if i < (self.lengtn-1):
-                self.box[i+1][0], self.box[i+1][3] = _tmp0, _tmp3
+        pass
 
         # Вычисляем наклоны позвонков
-
     def calculate_angle(self):
-        # num = 0
+        #num = 0
         angles_list = []
         for bx in self.box:
-            # cnt = cnts[i]
-            # rect = cv.minAreaRect(cnt)
-            # box = cv.boxPoints(rect)
-            # center, wh, rot = rect
-            # print(rot,box,type(box))
-            # box_transposed = box.transpose()
-            # y_box = box_transposed[1]
+            #cnt = cnts[i]
+            #rect = cv.minAreaRect(cnt)
+            #box = cv.boxPoints(rect)
+            #center, wh, rot = rect
+            #print(rot,box,type(box))
+            #box_transposed = box.transpose()
+            #y_box = box_transposed[1]
             first_point, second_point = bx[0], bx[3]
             down_side_vect = first_point - second_point
             norm = sqrt(down_side_vect[0] ** 2 + down_side_vect[1] ** 2)
             down_side_vect /= norm
-            # print('vect',down_side_vect,down_side_vect[1],down_side_vect[1]*180/pi)
+            #print('vect',down_side_vect,down_side_vect[1],down_side_vect[1]*180/pi)
             print('vect', down_side_vect[1] * 180 / pi)
             angles_list.append(down_side_vect[1] * 180 / pi)
-            # num += 1
+            #num += 1
         self.angle = np.array(angles_list)
-
-    # print('fisrt second_num',first_point,inum_second_point)
-    # box = np.int0(box)
-    # center = np.int0(center)
-    # rot = np.int0(rot)
+    #print('fisrt second_num',first_point,inum_second_point)
+    #box = np.int0(box)
+    #center = np.int0(center)
+    #rot = np.int0(rot)
 
     def calculate_neutral_kink(self):
         curr_angle = 0.
@@ -152,7 +106,7 @@ class spine_analizer:
             xs2, ys2 = tuple(spoint2)
             xf1, yf1 = tuple(fpoint1)
             xf2, yf2 = tuple(fpoint2)
-            # print(spoint1,xr1,yr1)
+            #print(spoint1,xr1,yr1)
             af = (yf2 - yf1) / (xf2 - xf1)
             bf = yf1 - af * xf1
             print('check1')
@@ -186,25 +140,35 @@ class spine_analizer:
         # Вычисление угла сколиоза по методу Фергюссона
         # Результат: углы, вычисленные по методу Фергюссона
         scoliosis_angle_list = []
+        print("MYBOXCENTER=", self.center)
         for i in range(len(self.neutral) - 1):
             ilower = self.neutral[i]
             iupper = self.neutral[i + 1]
-
+            """Определяем центральный позвонок между нижним и верхним нейтральным позвонком"""
+            icenter = np.round(iupper / ilower, 0)
+            icenter = np.round(icenter + ilower, 0)
+            icenter = np.int0(icenter)
+            """Берём координаты центров """
+            dpoint1, dpoint2 = self.center[ilower][0], self.center[ilower][1]
+            cpoint1, cpoint2 = self.center[icenter][0], self.center[icenter][1]
+            upoint1, upoint2 = self.center[iupper][0], self.center[iupper][1]
+            """Вычисляем вектор,проведённый из нижнего нейтрального в центр центрального позвонка"""
+            vect_x = cpoint1 - dpoint1  # a1
+            vect_y = cpoint2 - dpoint2  # a2
+            """Вычисляем вектор,проведённый из центра центрального позвонка в центр верхнего позвонка"""
+            vect_xx = upoint1 - cpoint1  # b1
+            vect_yy = upoint2 - cpoint2  # b2
+            """Высчитываем угол между двумя этими векторами"""
+            cos = vect_x * vect_xx + vect_y * vect_yy
+            cos2 = math.sqrt(vect_x * vect_x + vect_y * vect_y) * math.sqrt(vect_xx * vect_xx + vect_yy * vect_yy)
+            angle = math.acos(cos / cos2)
+            if angle > pi / 2:
+                angle = pi - angle
+            print('angle = ', angle, angle * 180 / pi)
+            scoliosis_angle_list.append(angle * 180 / pi)
         self.scoliosis_angle_Fergusson = np.array(scoliosis_angle_list)
 
-    # def calculate_scoliosis_severity(self, angle_type='Kobb'):
-    #     # Вычисление степени сколиоза
-    #     # Вычисляется сумма углов сколиоза, по ним вычисляется степень
-    #     pass
-    def draw(self):
-        for i in range(self.lengtn):
-            box = self.box[i]
-            box = np.int0(box)
-            print("BOX=", box)
-            cv.drawContours(self.img, [box], -1, (100, 220, 20), 2)
-            cv.imshow('Contours Image', self.img)
-            cv.waitKey()
-            cv.destroyAllWindows()
-
-
-SD = spine_analizer("test.png")
+    def calculate_scoliosis_severity(self, angle_type='Kobb'):
+        # Вычисление степени сколиоза
+        # Вычисляется сумма углов сколиоза, по ним вычисляется степень
+        pass
