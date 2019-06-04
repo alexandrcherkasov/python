@@ -145,9 +145,14 @@ class spine_analizer:
             ilower = self.neutral[i]
             iupper = self.neutral[i + 1]
             """Определяем центральный позвонок между нижним и верхним нейтральным позвонком"""
-            icenter = np.round(iupper / ilower, 0)
-            icenter = np.round(icenter + ilower, 0)
-            icenter = np.int0(icenter)
+            if self.neutral[i]==0:
+                icenter = np.round(iupper/2,0)
+                icenter = np.round(icenter + ilower,0)
+                icenter = np.int0(icenter)
+            else:
+                icenter = np.round(iupper / ilower, 0)
+                icenter = np.round(icenter + ilower, 0)
+                icenter = np.int0(icenter)
             """Берём координаты центров """
             dpoint1, dpoint2 = self.center[ilower][0], self.center[ilower][1]
             cpoint1, cpoint2 = self.center[icenter][0], self.center[icenter][1]
