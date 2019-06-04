@@ -153,6 +153,8 @@ class spine_analizer:
                 icenter = np.round(iupper / ilower, 0)
                 icenter = np.round(icenter + ilower, 0)
                 icenter = np.int0(icenter)
+            if icenter == iupper:
+                icenter= icenter - 1
             """Берём координаты центров """
             dpoint1, dpoint2 = self.center[ilower][0], self.center[ilower][1]
             cpoint1, cpoint2 = self.center[icenter][0], self.center[icenter][1]
