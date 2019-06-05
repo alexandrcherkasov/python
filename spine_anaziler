@@ -142,30 +142,26 @@ class spine_analizer:
         scoliosis_angle_list = []
         print("MYBOXCENTER=", self.center)
         for i in range(len(self.neutral) - 1):
+            print("SELF NEUTRAL I=",self.neutral[i])
+            print("SELF NEUTRAL I+1=",self.neutral[i+1])
             ilower = self.neutral[i]
             iupper = self.neutral[i + 1]
-            """Определяем центральный позвонок между нижним и верхним нейтральным позвонком"""
-            if self.neutral[i]==0:
-                icenter = np.round(iupper/2,0)
-                icenter = np.round(icenter + ilower,0)
-                icenter = np.int0(icenter)
-            else:
-                icenter = np.round(iupper / ilower, 0)
-                icenter = np.round(icenter + ilower, 0)
-                icenter = np.int0(icenter)
-            if icenter == iupper:
-                icenter= icenter - 1
-            """Берём координаты центров """
+            print('\n\nFERG i=', i, 'lower, upper = ', ilower, iupper)
+            icenter = math.ceil((ilower+iupper)/2)
+            print("ICENTER=",icenter)
+            print("True ICENTER=", icenter)
+            # vector center upper to
             dpoint1, dpoint2 = self.center[ilower][0], self.center[ilower][1]
             cpoint1, cpoint2 = self.center[icenter][0], self.center[icenter][1]
             upoint1, upoint2 = self.center[iupper][0], self.center[iupper][1]
-            """Вычисляем вектор,проведённый из нижнего нейтрального в центр центрального позвонка"""
-            vect_x = cpoint1 - dpoint1  # a1
-            vect_y = cpoint2 - dpoint2  # a2
-            """Вычисляем вектор,проведённый из центра центрального позвонка в центр верхнего позвонка"""
-            vect_xx = upoint1 - cpoint1  # b1
-            vect_yy = upoint2 - cpoint2  # b2
-            """Высчитываем угол между двумя этими векторами"""
+            """A"""
+            vect_x =   dpoint1- cpoint1 # a1
+            vect_y = dpoint2 - cpoint2  # a2
+            print("vect1=", vect_x, vect_y)
+            """B"""
+            vect_xx = upoint1 - cpoint1
+            vect_yy = upoint2 - cpoint2
+            print("vect2=", vect_xx, vect_yy)
             cos = vect_x * vect_xx + vect_y * vect_yy
             cos2 = math.sqrt(vect_x * vect_x + vect_y * vect_y) * math.sqrt(vect_xx * vect_xx + vect_yy * vect_yy)
             angle = math.acos(cos / cos2)
